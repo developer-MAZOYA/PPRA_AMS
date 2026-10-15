@@ -1,0 +1,39 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - '11434:11434'
+
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: Ppra
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Crosshood@442
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:latest
+    environment:
+      RABBITMQ_DEFAULT_USER: myuser
+      RABBITMQ_DEFAULT_PASS: secret
+    ports:
+      - '5672:5672'
+      - '15672:15672'   # RabbitMQ management UI
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: mazoya.y.mazoya@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - '5050:80'
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:

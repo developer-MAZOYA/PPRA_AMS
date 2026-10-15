@@ -1,0 +1,232 @@
+type User {
+    id: ID!
+    fullName: String!
+    email: String!
+    active: Boolean!
+    role: UserRole!
+}
+
+input UserInput {
+    fullName: String
+    email: String
+    password: String
+}
+
+input AdminUserInput {
+    fullName: String
+    email: String
+    password: String
+    role: UserRole!
+    active: Boolean
+}
+
+enum AssetStatus {
+    AVAILABLE
+    ASSIGNED
+    UNDER_MAINTENANCE
+    RETIRED
+    LOST
+    STOLEN
+}
+
+enum AssetCondition {
+    NEW
+    VERYGOOD
+    GOOD
+    FAIR
+}
+
+enum UserRole {
+    USER
+    ADMIN
+}
+
+type Asset {
+    id: ID!
+    assetType: String!
+    model: String!
+    serialNumber: String!
+    barcode: String!
+    status: AssetStatus!
+    condition: AssetCondition!
+    description: String
+    createdAt: String
+    updatedAt: String
+}
+
+input AssetInput {
+    assetType: String
+    model: String
+    serialNumber: String
+    barcode: String
+    status: AssetStatus
+    condition: AssetCondition
+    description: String
+}
+
+type AssetSuggestion {
+    assetType: String
+    model: String
+    serialNumber: String
+    barcode: String
+    condition: String
+    description: String
+    message: String
+}
+
+type AssetAssignment {
+    id: ID!
+    asset: Asset!
+    user: User!
+    assignedAt: String!
+    assignedBy: String!
+    returnedAt: String
+    returnedBy: String
+    assignNotes: String
+    returnNotes: String
+    conditionAtAssign: AssetCondition
+    conditionAtReturn: AssetCondition
+    open: Boolean!
+}
+
+scalar JSON
+
+type ReportSpec {
+    title: String
+    status: String
+    condition: String
+    assetType: String
+    heldBy: String
+    text: String
+    groupBy: String
+    columns: [String!]
+    sortBy: String
+    format: String
+    includeSummary: Boolean
+    showRows: Boolean
+}
+
+input ReportSpecInput {
+    title: String
+    status: String
+    condition: String
+    assetType: String
+    heldBy: String
+    text: String
+    groupBy: String
+    columns: [String!]
+    sortBy: String
+    format: String
+    includeSummary: Boolean
+    showRows: Boolean
+}
+
+type Table {
+    name: String!
+    counts: JSON
+}
+
+type ReportPlan {
+    spec: ReportSpec
+    total: Int!
+    summaries: [Table]
+    narrative: String
+    sample: [JSON]
+    notes: [String!]
+}
+
+type ReportFilePayload {
+    filename: String!
+    contentType: String!
+    contentBase64: String!
+}
+
+type AssetDraft {
+    row: Int
+    assetType: String
+    model: String
+    serialNumber: String
+    barcode: String
+    status: String
+    condition: String
+    allocatedTo: String
+    allocatedEmail: String
+    issues: [String!]
+    level: String
+}
+
+input AssetDraftInput {
+    row: Int
+    assetType: String
+    model: String
+    serialNumber: String
+    barcode: String
+    status: String
+    condition: String
+    allocatedTo: String
+    allocatedEmail: String
+    issues: [String!]
+    level: String
+}
+
+type ImportPreview {
+    fileName: String!
+    method: String
+    rowCount: Int!
+    rows: [AssetDraft!]!
+    notes: [String!]
+}
+
+type ImportResult {
+    created: Int!
+    skipped: Int!
+    messages: [String!]
+}
+
+type Query {
+    users: [User!]!
+    user(id: ID!): User
+    userByEmail(email: String!): User
+
+    assets: [Asset!]!
+    asset(id: ID!): Asset
+    assetByBarcode(barcode: String!): Asset
+    assetBySerialNumber(serialNumber: String!): Asset
+    assetsByStatus(status: AssetStatus!): [Asset!]!
+    assetsByType(assetType: String!): [Asset!]!
+
+    currentAssignment(assetId: ID!): AssetAssignment
+    assetHistory(assetId: ID!): [AssetAssignment!]!
+    userAssetHistory(userId: ID!): [AssetAssignment!]!
+
+    myCurrentAssets: [AssetAssignment!]!
+    myAssetHistory: [AssetAssignment!]!
+}
+
+type Mutation {
+
+    register(input: UserInput!): User!
+    login(email: String!, password: String!): String!
+
+
+    adminCreateUser(input: AdminUserInput!): User!
+    adminUpdateUser(id: ID!, input: AdminUserInput!): User!
+    toggleUserStatus(id: ID!): User!
+    changePassword(authHeader: String!, currentPassword: String!, newPassword: String!): Boolean!
+
+    createAsset(input: AssetInput!): Asset!
+    updateAsset(id: ID!, input: AssetInput!): Asset!
+    changeAssetStatus(id: ID!, status: AssetStatus!): Asset!
+    deleteAsset(id: ID!): Boolean!
+
+    assignAsset(assetId: ID!, userId: ID!, notes: String, condition: AssetCondition): AssetAssignment!
+    returnAsset(assetId: ID!, notes: String, condition: AssetCondition): AssetAssignment!
+
+    planReport(instruction: String!): ReportPlan!
+    generateReport(spec: ReportSpecInput!, narrative: String): ReportFilePayload!
+
+    previewImport(filename: String!, fileBase64: String!, instruction: String): ImportPreview!
+    confirmImport(rows: [AssetDraftInput!]!): ImportResult!
+
+    suggestAssetFields(description: String!): AssetSuggestion!
+}
